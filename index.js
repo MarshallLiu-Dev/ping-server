@@ -32,16 +32,16 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 // Conexão com o MongoDB
-console.log(process.env.MONGODB_URI);
+
 mongoose.connect(process.env.MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true
 })
     .then(() => {
-        console.log("Connected to MongoDB");
+        console.log("Conectado ao MongoDB");
     })
     .catch(err => {
-        console.error("MongoDB connection error:", err);
+        console.error("erro de conexão ao MongoDB:", err);
     });
 
 // Rota para registro de usuário
@@ -75,6 +75,34 @@ app.post('/register', uploadMiddleware.single('file'), async (req, res) => {
     }
 });
 
+// // Rota para login de usuário
+// app.post('/login', async (req, res) => {
+//     const { username, password } = req.body;
+//     const userDoc = await User.findOne({ username });
+
+//     if (!userDoc) {
+//         return res.status(400).json("Falha ao realizar o Login");
+//     }
+
+//     const passOk = bcrypt.compareSync(password, userDoc.password);
+
+//     if (passOk) {
+//         jwt.sign({ username, id: userDoc._id }, secret, {}, (err, token) => {
+//             if (err) throw err;
+
+//             const responseJSON = {
+//                 id: userDoc._id,
+//                 username,
+//                 profileImage: userDoc.profileImage,
+//             };
+
+//             res.cookie('token', token).json(responseJSON);
+//         });
+//     } else {
+//         res.status(400).json("Falha ao realizar o Login");
+//     }
+// });
+
 // Rota para login de usuário
 app.post('/login', async (req, res) => {
     const { username, password } = req.body;
@@ -96,6 +124,9 @@ app.post('/login', async (req, res) => {
                 profileImage: userDoc.profileImage,
             };
 
+            // Adicione um log para verificar o responseJSON
+            console.log('responseJSON:', responseJSON);
+
             res.cookie('token', token).json(responseJSON);
         });
     } else {
@@ -103,24 +134,25 @@ app.post('/login', async (req, res) => {
     }
 });
 
+
 // Rota para perfil de usuário
-// app.get('/profile', (req, res) => {
-//     const { token } = req.cookies;
-//     jwt.verify(token, secret, {}, (err, info) => {
-//         if (err) throw err;
-//         res.json(info);
-//     });
-// });
+app.get('/profile', (req, res) => {
+    const { token } = req.cookies;
+    jwt.verify(token, secret, {}, (err, info) => {
+        if (err) throw err;
+        res.json(info);
+    });
+});
 
 app.get("/profile", (req, res) => {
     const { token } = req.cookies;
 
     if (!token) {
-        return res.status(401).json({ error: "Token not provided" });
+        return res.status(401).json({ error: "Token não fornecido" });
     }
     jwt.verify(token, secret, {}, (err, info) => {
         if (err) {
-            return res.status(401).json({ error: "Invalid token" });
+            return res.status(401).json({ error: "token invalido" });
         }
         res.json(info);
     });
