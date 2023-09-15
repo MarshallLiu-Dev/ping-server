@@ -282,9 +282,6 @@ app.get('/post/:id', async (req, res) => {
     res.json(postDoc);
 });
    
-    
-
-
 
 const port = process.env.PORT || 5000;
 app.listen(port, () => {
