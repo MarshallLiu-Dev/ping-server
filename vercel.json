@@ -11,5 +11,10 @@
         "src": "/(.*)",
         "dest": "/"
       }
-    ]
+    ],
+    "directories": {
+      "buildOutput": "dist"
+    },
+    "cleanUrls": true
   }
+  
