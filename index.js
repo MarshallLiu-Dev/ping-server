@@ -165,49 +165,110 @@ app.post('/logout', (req, res) => {
 });
 
 // Rota para criar um post
-app.post('/create-post', upload.single('file'), async (req, res) => {
-    let coverPath = null;
+// app.post('/create-post', upload.single('file'), async (req, res) => {
+//     let coverPath = null;
 
+//     if (req.file) {
+//         const { originalname, buffer } = req.file;
+//         const parts = originalname.split('.');
+//         const ext = parts[parts.length - 1];
+
+//         const filename = `${Date.now()}.${ext}`;
+//         const filePath = path.join(__dirname, 'uploads', filename);
+
+//         fs.writeFileSync(filePath, buffer);
+//         coverPath = `uploads/${filename}`;
+//         console.log('File path:', filePath);
+
+//     }
+
+//     const { token } = req.cookies;
+
+//     jwt.verify(token, secret, {}, async (err, info) => {
+//         if (err) {
+//             return res.status(401).json({ error: 'Token inválido' });
+//         }
+
+//         const { title, summary, content } = req.body;
+
+//         try {
+//             const postDoc = await Post.create({
+//                 title,
+//                 summary,
+//                 content,
+//                 cover: coverPath,
+//                 author: info.id,
+//                 name: info.name,
+//             });
+
+//             res.status(201).json(postDoc);
+//         } catch (error) {
+//             console.error(error);
+//             res.status(500).json({ error: 'Erro ao criar a postagem' });
+//         }
+//     });
+// });
+
+app.post('/create-post', upload, handleFileUpload, validatePostData, createPost, errorHandler);
+
+async function handleFileUpload(req, res, next) {
     if (req.file) {
         const { originalname, buffer } = req.file;
         const parts = originalname.split('.');
         const ext = parts[parts.length - 1];
-
         const filename = `${Date.now()}.${ext}`;
         const filePath = path.join(__dirname, 'uploads', filename);
 
-        fs.writeFileSync(filePath, buffer);
-        coverPath = `uploads/${filename}`;
-        console.log('File path:', filePath);
-
-    }
-
-    const { token } = req.cookies;
-
-    jwt.verify(token, secret, {}, async (err, info) => {
-        if (err) {
-            return res.status(401).json({ error: 'Token inválido' });
-        }
-
-        const { title, summary, content } = req.body;
-
         try {
-            const postDoc = await Post.create({
-                title,
-                summary,
-                content,
-                cover: coverPath,
-                author: info.id,
-                name: info.name,
-            });
-
-            res.status(201).json(postDoc);
+            await fs.writeFile(filePath, buffer);
+            req.coverPath = `uploads/${filename}`;
+            console.log('File path:', filePath);
         } catch (error) {
-            console.error(error);
-            res.status(500).json({ error: 'Erro ao criar a postagem' });
+            // Lida com o erro de escrita do arquivo aqui
+            next(error);
         }
-    });
-});
+    }
+    next();
+}
+
+function validatePostData(req, res, next) {
+    const { title, summary, content } = req.body;
+    // Adicione validações de dados aqui, se necessário
+    // Exemplo: verifique se os campos obrigatórios estão presentes
+    if (!title || !summary || !content) {
+        return res.status(400).json({ error: 'Dados de postagem incompletos' });
+    }
+    next();
+}
+
+async function createPost(req, res, next) {
+    const { title, summary, content } = req.body;
+    const { coverPath } = req;
+
+    try {
+        const postDoc = await Post.create({
+            title,
+            summary,
+            content,
+            cover: coverPath,
+            author: info.id,
+            name: info.name,
+        });
+
+        res.status(201).json(postDoc);
+    } catch (error) {
+        // Lida com erros de criação do post aqui
+        next(error);
+    }
+}
+
+// Middleware de tratamento de erros
+function errorHandler(err, req, res, next) {
+    console.error(err.stack);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+}
+
+
 
 // Rota para listar posts
 app.get('/', async (req, res) => {
