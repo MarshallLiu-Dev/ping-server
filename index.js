@@ -18,7 +18,7 @@ const secret = 'asdfe45we45w345wegw345werjktjwertkj';
 
 app.use(
     cors({
-        origin: ['https://jovial-maamoul-38ed7a.netlify.app','https://pingsocial.vercel.app'],
+        origin: ['https://jovial-maamoul-38ed7a.netlify.app','https://pingsocial.vercel.app', 'http://192.168.0.112:3000', 'http://localhost:3000'],
         methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
         credentials: true, 
     })
