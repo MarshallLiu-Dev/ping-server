@@ -9,6 +9,19 @@ const multer = require('multer');
 const app = express();
 const fs = require('fs');
 const path = require('path');
+
+app.use(
+    cors({
+        origin: ['https://jovial-maamoul-38ed7a.netlify.app', 'https://pingsocial.vercel.app'],
+        methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+        credentials: true,
+    })
+);
+
+app.use(express.json());
+app.use(cookieParser());
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 const secret = 'asdfe45we45w345wegw345werjktjwertkj';
@@ -58,7 +71,7 @@ app.post('/register', uploadMiddleware.single('file'), async (req, res) => {
         });
 
         res.status(200).json(userDoc);
-        console.log(userDoc);
+        // console.log(userDoc);
     } catch (e) {
         console.error(e);
         res.status(400).json({ error: 'Erro no cadastro' });
@@ -69,13 +82,10 @@ app.post('/register', uploadMiddleware.single('file'), async (req, res) => {
 app.post('/login', async (req, res) => {
     const { username, password } = req.body;
     const userDoc = await User.findOne({ username });
-
     if (!userDoc) {
-        return res.status(400).json("Falha ao realizar o Login");
+        return res.status(400).json('User not found');
     }
-
     const passOk = bcrypt.compareSync(password, userDoc.password);
-
     if (passOk) {
         jwt.sign({ username, id: userDoc._id }, secret, { expiresIn: '1h' }, (err, token) => {
             if (err) throw err;
@@ -99,7 +109,7 @@ app.post('/login', async (req, res) => {
 
         });
     } else {
-        res.status(400).json("Falha ao realizar o Login");
+        res.status(400).json('Credenciais erradas');
     }
 });
 
@@ -118,14 +128,11 @@ app.get("/profile", (req, res) => {
     });
 });
 
-
-// Rota para logout de usuário
 app.post('/logout', (req, res) => {
     res.cookie('token', '').json('ok');
 });
 
-// Rota para criar um post
-app.post('/create-post', upload.single('file'), async (req, res) => {
+app.post('/post', upload.single('file'), async (req, res) => {
     let coverPath = null;
 
     if (req.file) {
@@ -139,14 +146,15 @@ app.post('/create-post', upload.single('file'), async (req, res) => {
         fs.writeFileSync(filePath, buffer);
         coverPath = `uploads/${filename}`;
         console.log('File path:', filePath);
-
     }
 
     const { token } = req.cookies;
+    // console.log('Token:', token);
 
     jwt.verify(token, secret, {}, async (err, info) => {
         if (err) {
-            return res.status(401).json({ error: 'Token inválido' });
+            console.error(err);
+            return res.status(401).json({ error: 'Token invalido' });
         }
 
         const { title, summary, content } = req.body;
@@ -164,7 +172,7 @@ app.post('/create-post', upload.single('file'), async (req, res) => {
             res.status(201).json(postDoc);
         } catch (error) {
             console.error(error);
-            res.status(500).json({ error: 'Erro ao criar a postagem' });
+            res.status(500).json({ error: 'Falha ao gerar o Post' });
         }
     });
 });
@@ -182,6 +190,26 @@ app.get('/', async (req, res) => {
         console.error(error);
         res.status(500).json({ error: 'Erro ao buscar os posts' });
     }
+
+    const { token } = req.cookies;
+    jwt.verify(token, secret, {}, async (err, info) => {
+        if (err) throw err;
+        const { id, title, summary, content } = req.body;
+        const postDoc = await Post.findById(id);
+        const isAuthor = JSON.stringify(postDoc.author) === JSON.stringify(info.id);
+        if (!isAuthor) {
+            return res.status(400).json('você não é o autor');
+        }
+        await postDoc.update({
+            title,
+            summary,
+            content,
+            cover: newPath ? newPath : postDoc.cover,
+        });
+
+        res.json(postDoc);
+    });
+
 });
 
 // Rota para buscar o perfil do usuário com posts ordenados por data decrescente
