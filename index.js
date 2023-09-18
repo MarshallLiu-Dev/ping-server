@@ -9,26 +9,11 @@ const multer = require('multer');
 const app = express();
 const fs = require('fs');
 const path = require('path');
-const cookieParser = require('cookie-parser');
-
-app.use(
-    cors({
-        origin: ['*'],
-        methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-        credentials: true,
-    })
-);
-
-app.use(express.json());
-app.use(cookieParser());
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 const secret = 'asdfe45we45w345wegw345werjktjwertkj';
 const cookieParser = require('cookie-parser');
 
-app.use(cookieParser());
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -37,6 +22,14 @@ app.use(cors({ origin: '*', credentials: true }));
 
 // Configurar o cookie-parser
 app.use(cookieParser());
+
+app.use(
+    cors({
+        origin: ['*'],
+        methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+        credentials: true,
+    })
+);
 
 // Conexão com o MongoDB
 mongoose.connect(process.env.MONGODB_URI, {
