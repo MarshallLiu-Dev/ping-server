@@ -9,10 +9,11 @@ const multer = require('multer');
 const app = express();
 const fs = require('fs');
 const path = require('path');
+const cookieParser = require('cookie-parser');
 
 app.use(
     cors({
-        origin: ['https://jovial-maamoul-38ed7a.netlify.app', 'https://pingsocial.vercel.app'],
+        origin: ['*'],
         methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
         credentials: true,
     })
