@@ -20,14 +20,14 @@ app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Configurar o CORS
-app.use(cors({ origin: '*', credentials: true }));
+app.use(cors({ origin: ['https://pingsocial.vercel.app', 'https://jovial-maamoul-38ed7a.netlify.app'], credentials: true }));
 
 // Configurar o cookie-parser
 app.use(cookieParser());
 
 app.use(
     cors({
-        origin: ['*'],
+        origin: ['https://pingsocial.vercel.app', 'https://jovial-maamoul-38ed7a.netlify.app'],
         methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
         credentials: true,
     })
