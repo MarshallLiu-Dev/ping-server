@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "description": "Servidor do site Ping Socil",
   "main": "index.js",
-   "engines": {
-    "node": "14.x"
+  "engines": {
+    "node": "18.12.1"
   },
   "scripts": {
     "start": "nodemon ./index.js",
