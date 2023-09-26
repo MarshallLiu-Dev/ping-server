@@ -20,18 +20,14 @@ app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Configurar o CORS
-app.use(cors({ origin: ['https://pingsocial.vercel.app', 'https://jovial-maamoul-38ed7a.netlify.app'], credentials: true }));
+app.use(cors({
+    origin: ['https://pingsocial.vercel.app', 'https://jovial-maamoul-38ed7a.netlify.app'],
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    credentials: true,
+}));
 
 // Configurar o cookie-parser
 app.use(cookieParser());
-
-app.use(
-    cors({
-        origin: ['https://pingsocial.vercel.app', 'https://jovial-maamoul-38ed7a.netlify.app'],
-        methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-        credentials: true,
-    })
-);
 
 // Conexão com o MongoDB
 mongoose.connect(process.env.MONGODB_URI, {
@@ -44,6 +40,52 @@ mongoose.connect(process.env.MONGODB_URI, {
     .catch(err => {
         console.error("erro de conexão ao MongoDB:", err);
     });
+
+// // Rota para criar posts
+// app.post('/post', upload.single('file'), async (req, res) => {
+//     let coverPath = null;
+
+//     if (req.file) {
+//         const { originalname, buffer } = req.file;
+//         const parts = originalname.split('.');
+//         const ext = parts[parts.length - 1];
+
+//         const filename = `${Date.now()}.${ext}`;
+//         const filePath = path.join(__dirname, 'uploads', filename);
+
+//         fs.writeFileSync(filePath, buffer);
+//         coverPath = `uploads/${filename}`;
+//         console.log('File path:', filePath);
+//     }
+
+//     const { token } = req.cookies;
+//     // console.log('Token:', token);
+
+//     jwt.verify(token, process.env.JWT_SECRET, {}, async (err, info) => {
+//         if (err) {
+//             console.error(err);
+//             return res.status(401).json({ error: 'Token invalido' });
+//         }
+
+//         const { title, summary, content } = req.body;
+
+//         try {
+//             const postDoc = await Post.create({
+//                 title,
+//                 summary,
+//                 content,
+//                 cover: coverPath,
+//                 author: info.id,
+//                 name: info.name,
+//             });
+
+//             res.status(201).json(postDoc);
+//         } catch (error) {
+//             console.error(error);
+//             res.status(500).json({ error: 'Falha ao gerar o Post' });
+//         }
+//     });
+// });
 
 // Rota para criar posts
 app.post('/post', upload.single('file'), async (req, res) => {
@@ -62,34 +104,24 @@ app.post('/post', upload.single('file'), async (req, res) => {
         console.log('File path:', filePath);
     }
 
-    const { token } = req.cookies;
-    // console.log('Token:', token);
+    const { title, summary, content } = req.body;
 
-    jwt.verify(token, process.env.JWT_SECRET, {}, async (err, info) => {
-        if (err) {
-            console.error(err);
-            return res.status(401).json({ error: 'Token invalido' });
-        }
+    try {
+        const postDoc = await Post.create({
+            title,
+            summary,
+            content,
+            cover: coverPath,
+            name: info.name,
+        });
 
-        const { title, summary, content } = req.body;
-
-        try {
-            const postDoc = await Post.create({
-                title,
-                summary,
-                content,
-                cover: coverPath,
-                author: info.id,
-                name: info.name,
-            });
-
-            res.status(201).json(postDoc);
-        } catch (error) {
-            console.error(error);
-            res.status(500).json({ error: 'Falha ao gerar o Post' });
-        }
-    });
+        res.status(201).json(postDoc);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Falha ao gerar o Post' });
+    }
 });
+
 
 // Rota para listar posts
 app.get('/', async (req, res) => {
